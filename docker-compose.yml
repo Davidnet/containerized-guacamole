@@ -20,6 +20,8 @@ services:
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    logging:
+      driver: journald
 
   nginx-letsencrypt:
     image: jrcs/letsencrypt-nginx-proxy-companion
@@ -33,6 +35,9 @@ services:
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    logging:
+      driver: journald
+
 
   init-guac-db:
     image: guacamole/guacamole:latest
@@ -51,15 +56,25 @@ services:
       POSTGRES_PASSWORD: 
     depends_on:
       - init-guac-db
+    logging:
+      driver: journald
+
 
   guacd:
     image: guacamole/guacd:latest
     restart: unless-stopped
+    logging:
+      driver: journald
+
 
   guac:
     image: guacamole/guacamole:latest
     restart: unless-stopped
+    volumes:
+      - ./extensions:/opt/local/extensions
+
     environment:
+      GUACAMOLE_HOME: "/opt/local"
       GUACD_HOSTNAME: guacd
       POSTGRES_HOSTNAME: postgres
       POSTGRES_DATABASE: ${POSTGRES_USER:-guacadb} 
@@ -72,6 +87,9 @@ services:
     depends_on:
       - postgres
       - guacd
+    logging:
+      driver: journald
+
 
 volumes:
   dbinit:
